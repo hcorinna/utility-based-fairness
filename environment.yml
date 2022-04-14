@@ -1,0 +1,11 @@
+name: utility-based-fairness
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - jupyter
+  - plotly
+  - pandas
+  - matplotlib
+  - scikit-learn
