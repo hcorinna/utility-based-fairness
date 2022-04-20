@@ -35,3 +35,15 @@ def get_pattern_function():
     if pattern == 'sufficientarianism':
         compare_utilities_function = above_threshold
     return compare_utilities_function
+
+def get_xlabel():
+    label = 'Fairness score:\n'
+    if pattern == 'egalitarianism':
+        label += 'max difference in expected utility - difference in expected utility'
+    if pattern == 'maximin': 
+        label += 'Minimum expected utility'
+    if pattern == 'prioritarianism':
+        label += 'Weighted sum of expected utilities'
+    if pattern == 'sufficientarianism':
+        label += 'Number of groups with expected utility above threshold'
+    return label

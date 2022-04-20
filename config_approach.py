@@ -1,13 +1,13 @@
 # Utility of the decision maker
-v_11 = 1
+v_11 = 0.1
 v_10 = -1
 v_01 = 0
 v_00 = 0
 
 # Utility of the decision subjects
-w_11 = 1
-w_10 = -1
-w_01 = 0
+w_11 = 10
+w_10 = 5
+w_01 = -1
 w_00 = 0
 
 # Relevant positions
@@ -23,7 +23,11 @@ A = 'sex'
 
 # Relation to inequality
 ### Options are: 'egalitarianism', 'maximin', 'prioritarianism', 'sufficientarianism'
-pattern = 'egalitarianism'
+EGALITARIANISM = 'egalitarianism'
+MAXIMIN = 'maximin'
+PRIORITARIANISM = 'prioritarianism'
+SUFFICIENTARIANISM = 'sufficientarianism'
+pattern = MAXIMIN
 
 ## Weight for worst-off group in prioritarianism (is not used if a pattern other than prioritarianism is chosen)
 k = 2
@@ -32,4 +36,4 @@ k = 2
 s = 0.5
 
 # Number of thresholds tested for each group
-num_thresholds = 11
+num_thresholds = 101
