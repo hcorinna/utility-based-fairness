@@ -8,12 +8,12 @@ def to_threshold(r, number_of_thresholds):
     return round(threshold, 2)
 
 def evaluate_model(all_data):
-    U_DM = []
-    U_DS_A0 = []
-    U_DS_A1 = []
-    FS = []
-    t0 = []
-    t1 = []
+    U_DM = [] # decision maker utility
+    U_DS_A0 = [] # decision subject utility group 0
+    U_DS_A1 = [] # decision subject utility group 1
+    FS = [] # fairness
+    t0 = [] # thresholds group 0
+    t1 = [] # thresholds group 1
     for i in range(num_thresholds):
         threshold_0 = to_threshold(i, num_thresholds)
         U_DS_r_A0 = calculate_utilities.U_DS(all_data, 0, threshold_0)

@@ -20,6 +20,5 @@ The datasets can be found in the folder `/data` and are taken from [Friedler et 
 
 The Pareto plot shown in ``Plots.ipynb`` shows how well a specific fairness criterion is fulfilled. This fairness criterion can be edited by making changes to the ``config_approach.py``. The dataset on which the fairness is measured can be edited in ``config_data.ipynb``. After making such changes, rerun the notebook ``Plots.ipynb``.
 
-## Plots
 
-To plot the figures shown in the paper ``Plots.ipynb``.
+Python version used: ``3.9.12``

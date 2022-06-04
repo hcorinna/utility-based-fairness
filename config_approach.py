@@ -1,10 +1,10 @@
-# Utility of the decision maker
+# Utility of the decision maker (as v_dy, for decisions d and individuals of type y)
 v_11 = 0.1
 v_10 = -1
 v_01 = 0
 v_00 = 0
 
-# Utility of the decision subjects
+# Utility of the decision subjects (as w_dy, for decisions d and individuals of type y)
 w_11 = 10
 w_10 = 5
 w_01 = -1
