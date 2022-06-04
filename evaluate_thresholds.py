@@ -2,37 +2,61 @@ import numpy as np
 from config_approach import *
 import calculate_utilities
 import pattern_functions
+import pandas as pd
 
-def to_threshold(r, number_of_thresholds):
-    threshold = (1/(number_of_thresholds-1)) * r
-    return round(threshold, 2)
+
+def get_thresholds_linear(num_thresholds):
+    # thresholds with equal distance to each other, irrespective of the bin sizes
+    thresholds = []
+    for i in np.linspace(1/num_thresholds, 1, num_thresholds).tolist():
+        thresholds.append(i)
+    if min(thresholds) > 0:
+        thresholds.insert(0,0.0)
+    return thresholds
+
+
 
 def evaluate_model(all_data):
-    U_DM = [] # decision maker utility
-    U_DS_A0 = [] # decision subject utility group 0
-    U_DS_A1 = [] # decision subject utility group 1
-    FS = [] # fairness
-    t0 = [] # thresholds group 0
-    t1 = [] # thresholds group 1
-    for i in range(num_thresholds):
-        threshold_0 = to_threshold(i, num_thresholds)
+    U_DM_A0 = {} # decision maker utility group 0
+    U_DM_A1 = {} # decision maker utility group 1
+    U_DS_A0 = {} # decision subject utility group 0
+    U_DS_A1 = {} # decision subject utility group 1
+
+    thresholds = get_thresholds_linear(num_thresholds)
+
+    # calculate DM- and DS-utility for group 0
+    for threshold_0 in thresholds:
         U_DS_r_A0 = calculate_utilities.U_DS(all_data, 0, threshold_0)
-        for j in range(num_thresholds):
-            U_DS_A0.append(U_DS_r_A0)
-            t0.append(threshold_0)
-            threshold_1 = to_threshold(j, num_thresholds)
-            t1.append(threshold_1)
-            U_DM_r = calculate_utilities.U_DM(all_data, threshold_0, threshold_1)
-            U_DM.append(U_DM_r)
-            U_DS_r_A1 = calculate_utilities.U_DS(all_data, 1, threshold_1)
-            U_DS_A1.append(U_DS_r_A1)
+        U_DS_A0[threshold_0] = U_DS_r_A0
+        U_DM_r_A0, n_A0 = calculate_utilities.U_DM(all_data, 0, threshold_0)
+        U_DM_A0[threshold_0] = U_DM_r_A0
+
+    # calculate DM- and DS-utility for group 1
+    for threshold_1 in thresholds:
+        U_DS_r_A1 = calculate_utilities.U_DS(all_data, 1, threshold_1)
+        U_DS_A1[threshold_1] = U_DS_r_A1
+        U_DM_r_A1, n_A1 = calculate_utilities.U_DM(all_data, 1, threshold_1)
+        U_DM_A1[threshold_1] = U_DM_r_A1
+
+    # now calculate utilities and fairness scores for all thresholds combinations
+    U_DM_all_thresholds = [] # decision maker utility for all thresholds combinations
+    U_DS_A0_all_thresholds = [] # group 0 decision subject utility for all thresholds combinations
+    U_DS_A1_all_thresholds = [] # group 1 decision subject utility for all thresholds combinations
+    FS = [] # fairness
+
+    for threshold_0 in thresholds:
+        for threshold_1 in thresholds:
+            U_DM_all_thresholds.append((U_DM_A0[threshold_0] * n_A0 + U_DM_A1[threshold_1] * n_A1) / (n_A0 + n_A1))
+            U_DS_A0_all_thresholds.append(U_DS_A0[threshold_0])
+            U_DS_A1_all_thresholds.append(U_DS_A1[threshold_1])
             compare_utilities_function = pattern_functions.get_pattern_function()
-            FS_r = compare_utilities_function(U_DS_r_A0, U_DS_r_A1)
+            FS_r = compare_utilities_function(U_DS_A0[threshold_0], U_DS_A1[threshold_1])
             FS.append(FS_r)
+
     if pattern == 'egalitarianism':
         max_FS = max(FS)
         FS = [max_FS - f for f in FS]
-    return U_DM, U_DS_A0, U_DS_A1, FS, t0, t1
+    return U_DM_all_thresholds, U_DS_A0_all_thresholds, U_DS_A1_all_thresholds, FS
 
 def is_pareto_efficient(points, return_mask = True):
     """
