@@ -37,3 +37,7 @@ s = 0.5
 
 # Number of thresholds tested for each group
 num_thresholds = 101
+
+# Type of decision rules to be considered
+### Options are: 'linear-lower', 'linear-upper-and-lower', 'quantile-based-lower', 'quantile-based-upper-and-lower'
+decision_rules = 'quantile-based-lower'

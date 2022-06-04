@@ -5,24 +5,80 @@ import pattern_functions
 import pandas as pd
 
 
-def get_thresholds_linear(num_thresholds):
+def get_thresholds_linear(num_thresholds, p=None):
     # thresholds with equal distance to each other, irrespective of the bin sizes
     thresholds = []
     for i in np.linspace(1/num_thresholds, 1, num_thresholds).tolist():
         thresholds.append(i)
     if min(thresholds) > 0:
-        thresholds.insert(0,0.0)
+        thresholds.insert(0, 0.0)
     return thresholds
 
 
+def get_upper_and_lower_bound_thresholds(num_thresholds, p):
+    # get thresholds with equal distance to each other, irrespective of the bin sizes
+    # every "threshold" yields two decision rules: one upper- and one lower-bound threshold.
+    # for example, for thresholds=0.1, a lower-bound threshold means that all individuals with a p>0.1 are assigned D=1. An upper-bound threshold means that all individuals with a p<0.1 are assigned D=1.
+    thresholds = []
+    for i in np.linspace(1/num_thresholds, 1, num_thresholds).tolist():
+        thresholds.append((0, i))
+    for i in np.linspace(1/num_thresholds, 1-1/num_thresholds, num_thresholds-1).tolist():
+        thresholds.append((i, 1.0))
+    return thresholds
+
+
+def get_thresholds_quantile_based(num_thresholds, p):
+    # get thresholds with equally sized buckets (i.e., depending on the score distribution)
+    results, bin_edges = pd.qcut(
+        p, q=num_thresholds, retbins=True, duplicates="drop")
+    thresholds = list(bin_edges)
+    if min(p) < 0.1 and min(p) >= 0:
+        thresholds.insert(0, 0.0)
+    if max(p) > 0.9 and max(p) <= 1:
+        thresholds.append(1.0)
+    return thresholds
+
+
+def get_upper_and_lower_bound_thresholds_quantile_based(num_thresholds, p):
+    # get thresholds with equally sized buckets (i.e., depending on the score distribution)
+    # every "threshold" yields two decision rules: one upper- and one lower-bound threshold.
+    # for example, for thresholds=0.1, a lower-bound threshold means that all individuals with a p>0.1 are assigned D=1. An upper-bound threshold means that all individuals with a p<0.1 are assigned D=1.
+    results, bin_edges = pd.qcut(
+        p, q=num_thresholds, retbins=True, duplicates="drop")
+    thresholds = list(bin_edges)
+    if min(p) < 0.1 and min(p) >= 0:
+        thresholds.insert(0, 0.0)
+    if max(p) > 0.9 and max(p) <= 1:
+        thresholds.append(1.0)
+    threshold_tuples = []
+    minimum, maximum = min(thresholds), max(thresholds)
+    for t in thresholds:
+        new_tuple = (minimum, t)
+        if minimum != t and new_tuple not in threshold_tuples:
+            threshold_tuples.append(new_tuple)
+    for t in thresholds:
+        new_tuple = (t, maximum)
+        if maximum != t and new_tuple not in threshold_tuples:
+            threshold_tuples.append(new_tuple)
+    return threshold_tuples
+
 
 def evaluate_model(all_data):
-    U_DM_A0 = {} # decision maker utility group 0
-    U_DM_A1 = {} # decision maker utility group 1
-    U_DS_A0 = {} # decision subject utility group 0
-    U_DS_A1 = {} # decision subject utility group 1
+    U_DM_A0 = {}  # decision maker utility group 0
+    U_DM_A1 = {}  # decision maker utility group 1
+    U_DS_A0 = {}  # decision subject utility group 0
+    U_DS_A1 = {}  # decision subject utility group 1
 
-    thresholds = get_thresholds_linear(num_thresholds)
+    if decision_rules == 'linear-lower':
+        threshold_function = get_thresholds_linear
+    elif decision_rules == 'linear-upper-and-lower':
+        threshold_function = get_upper_and_lower_bound_thresholds
+    elif decision_rules == 'quantile-based-lower':
+        threshold_function = get_thresholds_quantile_based
+    elif decision_rules == 'quantile-based-upper-and-lower':
+        threshold_function = get_upper_and_lower_bound_thresholds_quantile_based
+
+    thresholds = threshold_function(num_thresholds, all_data["p"])
 
     # calculate DM- and DS-utility for group 0
     for threshold_0 in thresholds:
@@ -58,7 +114,8 @@ def evaluate_model(all_data):
         FS = [max_FS - f for f in FS]
     return U_DM_all_thresholds, U_DS_A0_all_thresholds, U_DS_A1_all_thresholds, FS
 
-def is_pareto_efficient(points, return_mask = True):
+
+def is_pareto_efficient(points, return_mask=True):
     """
     From: https://stackoverflow.com/questions/32791911/fast-calculation-of-pareto-front-in-python
     Find the pareto-efficient points
@@ -71,14 +128,15 @@ def is_pareto_efficient(points, return_mask = True):
     is_efficient = np.arange(points.shape[0])
     n_points = points.shape[0]
     next_point_index = 0  # Next index in the is_efficient array to search for
-    while next_point_index<len(points):
-        nondominated_point_mask = np.any(points>points[next_point_index], axis=1)
+    while next_point_index < len(points):
+        nondominated_point_mask = np.any(points > points[next_point_index], axis=1)
         nondominated_point_mask[next_point_index] = True
-        is_efficient = is_efficient[nondominated_point_mask]  # Remove dominated points
+        # Remove dominated points
+        is_efficient = is_efficient[nondominated_point_mask]
         points = points[nondominated_point_mask]
         next_point_index = np.sum(nondominated_point_mask[:next_point_index])+1
     if return_mask:
-        is_efficient_mask = np.zeros(n_points, dtype = bool)
+        is_efficient_mask = np.zeros(n_points, dtype=bool)
         is_efficient_mask[is_efficient] = True
         return is_efficient_mask
     else:
