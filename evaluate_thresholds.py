@@ -147,6 +147,7 @@ def evaluate_model(all_data):
             FS.append(FS_r)
 
     if pattern == 'egalitarianism':
+        # make sure that higher fairness scores are better
         max_FS = max(FS)
         FS = [max_FS - f for f in FS]
     return U_DM_all_thresholds, U_DS_A0_all_thresholds, U_DS_A1_all_thresholds, FS
