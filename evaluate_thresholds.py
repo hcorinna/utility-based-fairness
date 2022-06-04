@@ -1,8 +1,8 @@
 import numpy as np
 from config_approach import *
-import calculate_utilities
 import pattern_functions
 import pandas as pd
+import config_data
 
 
 def get_thresholds_linear(num_thresholds, p=None):
@@ -63,6 +63,45 @@ def get_upper_and_lower_bound_thresholds_quantile_based(num_thresholds, p):
     return threshold_tuples
 
 
+def calculate_utilities(data, A_value, threshold):
+    if decision_rules in ['linear-lower', 'quantile-based-lower']:
+        data['D'] = data['p'] >= threshold
+    elif decision_rules in ['linear-upper-and-lower', 'quantile-based-upper-and-lower']:
+        data['D'] = data['p'].between(threshold[0], threshold[1])
+
+    expected_utility_DM = 0
+    expected_utility_DS = 0
+    counter_DM = 0
+    counter_DS = 0
+    for index, decision_subject in data.iterrows():
+        if decision_subject[A] == A_value:
+            y_i = decision_subject['Y']
+            p_i = decision_subject['p']
+            d_i = decision_subject['D']
+            # calculate the decision maker utility
+            u_DM = v_11 * d_i * y_i + v_10 * d_i * \
+                (1-y_i) + v_01 * (1-d_i) * y_i + v_00 * (1-d_i) * (1-y_i)
+            # custom function
+            if config_data.chosen_dataset == config_data.german:
+                u_DM *= decision_subject['credit_amount']
+            expected_utility_DM += u_DM
+            counter_DM += 1
+
+            if J(decision_subject):
+                # calculate the decision subject utility
+                u_DS = w_11 * d_i * y_i + w_10 * d_i * \
+                    (1-y_i) + w_01 * (1-d_i) * y_i + w_00 * (1-d_i) * (1-y_i)
+                expected_utility_DS += u_DS
+                counter_DS += 1
+
+    if (counter_DM != 0):
+        expected_utility_DM /= counter_DM
+    if (counter_DS != 0):
+        expected_utility_DS /= counter_DS
+
+    return expected_utility_DM, expected_utility_DS, counter_DM
+
+
 def evaluate_model(all_data):
     U_DM_A0 = {}  # decision maker utility group 0
     U_DM_A1 = {}  # decision maker utility group 1
@@ -82,16 +121,14 @@ def evaluate_model(all_data):
 
     # calculate DM- and DS-utility for group 0
     for threshold_0 in thresholds:
-        U_DS_r_A0 = calculate_utilities.U_DS(all_data, 0, threshold_0)
+        U_DM_r_A0, U_DS_r_A0, n_A0 = calculate_utilities(all_data, 0, threshold_0)
         U_DS_A0[threshold_0] = U_DS_r_A0
-        U_DM_r_A0, n_A0 = calculate_utilities.U_DM(all_data, 0, threshold_0)
         U_DM_A0[threshold_0] = U_DM_r_A0
 
     # calculate DM- and DS-utility for group 1
     for threshold_1 in thresholds:
-        U_DS_r_A1 = calculate_utilities.U_DS(all_data, 1, threshold_1)
+        U_DM_r_A1, U_DS_r_A1, n_A1 = calculate_utilities(all_data, 1, threshold_1)
         U_DS_A1[threshold_1] = U_DS_r_A1
-        U_DM_r_A1, n_A1 = calculate_utilities.U_DM(all_data, 1, threshold_1)
         U_DM_A1[threshold_1] = U_DM_r_A1
 
     # now calculate utilities and fairness scores for all thresholds combinations

@@ -40,4 +40,4 @@ num_thresholds = 101
 
 # Type of decision rules to be considered
 ### Options are: 'linear-lower', 'linear-upper-and-lower', 'quantile-based-lower', 'quantile-based-upper-and-lower'
-decision_rules = 'quantile-based-lower'
+decision_rules = 'quantile-based-upper-and-lower'
