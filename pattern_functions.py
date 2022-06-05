@@ -39,7 +39,7 @@ def get_pattern_function():
 def get_xlabel():
     label = 'Fairness score:\n'
     if pattern == 'egalitarianism':
-        label += 'max difference in expected utility - difference in expected utility'
+        label += 'Max difference in absolute expected utility - difference in absolute expected utility'
     if pattern == 'maximin': 
         label += 'Minimum expected utility'
     if pattern == 'prioritarianism':
